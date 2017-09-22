@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			ul{list-style: none;margin: 0px;padding: 0px; }
+			li{list-style: none;margin-top: 3px;padding: 0px; }
+		    i{width:16px; height:16px;  margin-right:5px; float:left;} 
+		    input{width:14px; height:14px; margin:0px;float:left;} 
+			i{background:url(img/add.png) no-repeat 0 0;}
+			ul i.unfold {background:url(img/reduce.png) no-repeat 0 0;}
+			a{ text-decoration: none; color:#666; opacity: 0.9;}
+			.fold{ display:none;}  
+			
+		</style>
+		<script type='text/javascript' src="js/jquery.min.js"></script>
+	</head>
+	<body>
+		<div id="tree" onlyLeaf="true" onlyIcon="true" checkBox="false" style="border: 1px solid #69d1cb;margin: 0px; padding: 0px;width: 250px;height:500px;overflow: auto; ">
+
+		</div>
+		<div id="textDiv" style="position: absolute;margin-top: 10px;"></div>
+		<script type="text/javascript">
+			var ids=[
+			{id:1,pid:0,name:'行政档案'},
+			{id:2,pid:0,name:'财务档案'},
+			{id:3,pid:0,name:'研发档案'},
+			{id:4,pid:0,name:'运营档案'},
+			{id:12,pid:1,name:'行政中心明细'},
+			{id:121,pid:12,name:'2017年行政中心财务报告'},
+			{id:123,pid:12,name:'2017年行政中心财务报告'},
+			{id:122,pid:12,name:'2017年行政中心财务报告'},
+			{id:1221,pid:122,name:'2017年行政中心报告明细'},
+			{id:13,pid:1,name:'统计工作'},
+			{id:131,pid:13,name:'2017年统计工作统计报告'},
+			{id:21,pid:2,name:'财务中心明细'},
+			{id:31,pid:3,name:'研发中心明细'}
+			];
+			
+			init(ids);
+				
+			function init(data){
+				 var dul=document.createElement("ul");
+				 dul.marginLeft="0px";
+				 document.getElementById("tree").appendChild(dul);
+				for (var i=0;i<data.length;i++) {
+					var li=document.createElement("li");
+				    var ul=document.createElement("ul");
+				    var a=document.createElement("a");
+				    var div=document.getElementById("tree");
+				    var check=false,box=null;
+				    
+				    $(a).attr("href","javascript:void(0)");
+					var that=data[i];
+				    $(a).text(that.name);
+				    $(a).attr("leaf","true");//默认都是叶子结点
+				    //遍历数据 添加属性
+				    for(var pro in that){
+				    	if(pro!="id")
+				    	 $(a).attr(pro,that[pro])
+				    }
+					$(li).append(a);
+					$(li).attr("id",that.id);
+					li.style.marginLeft="21px";//默认
+					if($(div).attr("checkBox")=="true"){
+				    	 check=true;
+				    }
+				  	if(check){
+				         box=document.createElement("input"); 
+				    	box.setAttribute("type","checkbox");
+				        $(box).attr("name",that.pid);
+				        $(a).append(box);
+				    }
+						
+					//添加节点
+						var parentId=document.getElementById(that.pid);
+						
+						if(parentId){
+							var ibiao=parentId.getElementsByTagName("i");	
+							//添加标签图标
+							if(ibiao.length<1){
+							 ibiao=document.createElement("i");
+							//父元素的子元素 :a标签  在开头添加元素
+							 $(parentId).find("a").prepend(ibiao);
+							 $(ibiao).addClass("item");
+							 //非叶子节点
+							 $(ibiao).parent().attr("leaf","false"); //含有子元素 修改为不是叶子结点
+							 parentId.style.marginLeft="0px";//默认
+							 
+							
+							}
+		                   // alert(parentId.parentNode.style.marginLeft);   
+							ul.appendChild(li);
+							ul.style.marginLeft=14+"px";
+							ul.className="fold ul-"+that.pid;
+							parentId.appendChild(ul);
+							
+							
+						}else{
+							li.style.marginLeft="21px";//默认
+							$("#tree").children(0).append(li);
+						}
+					
+				}
+				
+				//i图标标签添加点击事件
+			   $(".item").click(function(){
+
+				show(this,1);
+				
+		    	})
+			   // 节点悬浮事件
+			    $("#tree a").hover(function(){
+			    	this.style.backgroundColor="rgb(179,231,255)"
+			    },function(){
+			    	this.style.backgroundColor="white"
+			    	
+			    })
+			   //节点点击事件
+			   $("#tree a").click(function(){
+			   	var a=$(this);
+			   	
+			   	var div=document.getElementById("tree");
+			   	//只能点击图标 才展开
+			   	if($(div).attr("onlyIcon")=="false"){
+			   		var ibiao=a.find("i");show(ibiao);
+			   	}
+				//只能选取叶子结点
+				if($(div).attr("onlyLeaf")=="true"){	
+				    var leaf=a.attr("leaf");
+				    if(leaf=="true"){
+				      if(typeof(nodeClick)=="function"){
+				  	    nodeClick(a);
+				      }
+			         	
+				    }
+				    return;
+				 } 
+				  if(typeof(nodeClick)=="function"){
+				  	nodeClick(a);
+				  }
+				 
+			   })
+			   //checkbox点击事件
+			    $("#tree input[type=checkbox]").click(function(){
+			    
+			    	//点击父元素 子元素全部选上
+			       var inputs=this.parentElement.parentElement.getElementsByTagName("input");
+			      for(var i=0;i<inputs.length;i++){
+			      	 if($(this).is(":checked"))
+			      	  $(inputs[i]).prop("checked",true);//推荐使用prop
+			      	 else
+			      	  $(inputs[i]).prop("checked",false);
+			      }
+			    }) 
+                
+			}
+			
+			function show(sender,flag){
+			    var div=document.getElementById("tree");
+			   	//只能点击图标 才展开
+			   	if($(div).attr("onlyIcon")=="false"){
+			   		if(flag==1)
+			   			return;
+			   	}
+				
+				var ibiao=$(sender);
+				var par=$(sender).parent().parent();//li标签
+				var id=par.attr("id");
+				//alert(id)
+				par.find(".ul-"+id).slideToggle(300);//ul元素可见
+				ibiao.toggleClass("unfold");//切换图标
+			}
+			
+			function nodeClick(sender){
+				var val=$(sender).text();
+				var id=$(sender).attr("id");
+				var pid=$(sender).attr("pid");
+				
+				$("#textDiv").html("你当前选择的节点是:"+val+" pid:"+pid)
+			}
+		</script>
+
+	</body>
+</html>
